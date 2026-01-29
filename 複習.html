@@ -2,7 +2,6 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <!-- 禁用縮放以移除雙擊縮放功能 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>114年外幣考試</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
@@ -32,7 +31,7 @@
       overflow-y: auto;
       max-height: 70vh;
       position: relative;
-      cursor: pointer;
+      cursor: default; /* 修改：題目區塊本身用預設游標，避免混淆 */
       transition: box-shadow 0.5s ease;
       display: block;
     }
@@ -40,20 +39,27 @@
     h1 { color: #333; font-size: 2em; margin-bottom: 1.5rem; animation: fadeIn 1.5s ease; }
     .question-content h3 { font-size: 1.2em; margin-bottom: 1rem; color: #4a90e2; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* --- 修改重點開始：將選項寬度鎖定在文字範圍 --- */
     .option {
       display: block;
+      width: fit-content;       /* 關鍵修改：寬度只包覆內容 */
+      max-width: 100%;          /* 避免長文字超出容器 */
       background-color: white;
       color: black;
       padding: 0.75rem;
       margin-bottom: 0.5rem;
       border-radius: 0.3125rem;
       transition: background-color 0.3s, color 0.3s;
+      cursor: pointer;          /* 增加手指游標指示可點擊 */
     }
+    /* --- 修改重點結束 --- */
+
     .option > div { display: block; }
     .options div:hover {
-      background-color: #ffb74d;
-      transform-origin: top left;
-      box-shadow: 0 0.5rem 1rem rgba(255, 183, 77, 0.4);
+     background-color: initial;
+     box-shadow: none;
+     transform: none;
     }
     .option.answer { background-color: #fff3a6; color: #343a40; }
     .remark { background-color: #0dcaf0; padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.3125rem; }
@@ -117,13 +123,13 @@
       z-index: 1001;
       cursor: pointer;
     }
-	.highlight {
-	  color: #9A0036;
-	  font-weight: bold;
-	  font-size: calc(1em + 0.1rem);
-	}
-	
-	.deep-purple {
+    .highlight {
+      color: #9A0036;
+      font-weight: bold;
+      font-size: calc(1em + 0.1rem);
+    }
+    
+    .deep-purple {
    color: #9575cd;/* 深紫色，也可以換成你喜歡的色碼 */
   font-weight: bold;
     font-size: 1.1em;
@@ -248,28 +254,28 @@
       border-radius: 0;
       display: inline-flex;
       align-items: center;
-	  }
-	.container-fluid{max-width:100%;padding:0 .75rem;}
+      }
+    .container-fluid{max-width:100%;padding:0 .75rem;}
 
-	  /* 2. wrapper 吃滿 */
-	  .question-wrapper{display:block;width:100%;}
+      /* 2. wrapper 吃滿 */
+      .question-wrapper{display:block;width:100%;}
 
-	  /* 3. 全局 padding 下修 */
-	  body{padding:.75rem .5rem;}
+      /* 3. 全局 padding 下修 */
+      body{padding:.75rem .5rem;}
 
-	  /* 4. block 更精瘦 */
-	  .question-block{
-		padding:1rem;margin-bottom:1rem;max-height:none;
-	  }
+      /* 4. block 更精瘦 */
+      .question-block{
+        padding:1rem;margin-bottom:1rem;max-height:none;
+      }
 
-	  /* 5. 按鈕列彈性寬度 */
-	  .fixed-buttons{width:100%;max-width:420px;}
+      /* 5. 按鈕列彈性寬度 */
+      .fixed-buttons{width:100%;max-width:420px;}
   
   
     
-	
-		/*── １. 桌面版把 0~7 項水平排 ──*/
-	@media (min-width: 769px) {
+    
+        /*── １. 桌面版把 0~7 項水平排 ──*/
+    @media (min-width: 769px) {
   /* 隱藏 collapse（Bootstrap 原本就有 .collapse {display:none}） */
   #collapseSettings.collapse {
     display: none !important;
@@ -289,13 +295,13 @@
   }
 }
 
-	.no-highlight .highlight {
-	  /* 只還原成一般文字 */
-	  background: none !important;
-	  color: inherit !important;
-	  font-weight: normal !important;
-	  font-size: inherit !important;
-	}
+    .no-highlight .highlight {
+      /* 只還原成一般文字 */
+      background: none !important;
+      color: inherit !important;
+      font-weight: normal !important;
+      font-size: inherit !important;
+    }
 
   </style>
 </head>
@@ -306,7 +312,6 @@
       <div class="col-12 progress-header">
         <strong>當前題號/總題數:</strong>
         <span id="current-question">0</span>/<span id="total-questions">0</span>
-        <!-- 新增下載/複製按鈕容器 -->
         <span id="filter-download-container" style="margin-left: 10px;"></span>
         <button class="navbar-toggler d-md-none float-end" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
           <span class="custom-toggler-icon"></span>
@@ -351,10 +356,10 @@
           <input class="form-check-input" type="checkbox" id="hidePic" onchange="togglePicVisibility()" checked>
           <label class="form-check-label" for="hidePic">6. 隱藏Pic</label>
         </div>
-		<div class="form-check mb-2">
-			<input class="form-check-input" type="checkbox" id="toggleHighlight" onchange="toggleHighlight()">
-			<label class="form-check-label" for="toggleHighlight">7. 關鍵字標示</label>
-		</div>
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="toggleHighlight" onchange="toggleHighlight()">
+            <label class="form-check-label" for="toggleHighlight">7. 關鍵字標示</label>
+        </div>
         <div class="mb-2">
           <label for="categoryFilter">7. 依類別查詢：</label>
           <select id="categoryFilter" class="form-select" onchange="filterByCategory()">
@@ -369,16 +374,16 @@
           <label for="feloFilter">9. 查筆記關鍵字：</label>
           <input type="text" id="feloFilter" class="form-control" placeholder="使用「+」代表AND，用「,」或「，」代表OR，用「!」或「-」代表NOT" oninput="filterByFelo()">
         </div>
-		<div class="mb-2">
-		  <label for="answerFilter">10. 查答案關鍵字：</label>
-		  <input
-			type="text"
-			id="answerFilter"
-			class="form-control"
-			placeholder="使用「+」代表AND，用「,」或「，」代表OR，用「!」或「-」代表NOT"
-			oninput="applyFilters()"
-		  >
-		</div>
+        <div class="mb-2">
+          <label for="answerFilter">10. 查答案關鍵字：</label>
+          <input
+            type="text"
+            id="answerFilter"
+            class="form-control"
+            placeholder="使用「+」代表AND，用「,」或「，」代表OR，用「!」或「-」代表NOT"
+            oninput="applyFilters()"
+          >
+        </div>
 
         <div class="mb-2">
           <label for="questionTypeFilter">11. 依題型查詢：</label>
@@ -398,18 +403,18 @@
             <option value="3">3 顆星</option>
           </select>
         </div>
-				<div class="mb-2">
-		  <label for="reviewLightFilter">13. 依複習燈號：</label>
-		  <select id="reviewLightFilter" class="form-select" onchange="applyFilters()">
-			<option value="">全部</option>
-			<option value="red">紅燈：未複習</option>
-			<option value="green">綠燈：已複習(無星)</option>
-			<option value="yellow">黃燈：已複習(有星)</option>
-		  </select>		  
-		</div>
+                <div class="mb-2">
+          <label for="reviewLightFilter">13. 依複習燈號：</label>
+          <select id="reviewLightFilter" class="form-select" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="red">紅燈：未複習</option>
+            <option value="green">綠燈：已複習(無星)</option>
+            <option value="yellow">黃燈：已複習(有星)</option>
+          </select>          
+        </div>
         <div class="mb-2">
           <label>14. 修改筆記並匯出</label>
-          <button class="btn btn-secondary mt-3" onclick="exportModifiedQuestions()">匯出修改後檔案</button>		
+          <button class="btn btn-secondary mt-3" onclick="exportModifiedQuestions()">匯出修改後檔案</button>        
         </div>
       </div>
     </div>
@@ -421,13 +426,11 @@
       </div>
     </div>
     <div class="row position-relative">
-      <!-- 手機版按鈕：註、搜、快 -->
       <button class="mobile-note-btn" onclick="toggleMobileNotes()">註</button>
       <button class="mobile-copy-search-btn" onclick="copyAndSearchFelo()">搜</button>
       <button class="mobile-quick-btn" onclick="toggleQuickMode()">快</button>
       <div class="question-wrapper" style="position: relative; display: inline-block;">
         <div class="col-12">
-          <!-- 注意：question-container 內容會由 renderQuestion() 渲染 -->
           <div id="question-container" class="question-block" style="position: relative;"></div>
         </div>
       </div>
@@ -442,7 +445,6 @@
     </div>
   </div>
   
-<!-- 右下角：同一欄直立按鈕 -->
 <div id="copy-actions" class="copy-actions" style="
   position: fixed; bottom: 2.5rem; right: .625rem;
   display: flex; flex-direction: column; gap: .6rem; z-index: 1000;">
@@ -505,8 +507,8 @@
     let isMultipleChoice = false;
     let answered = false;
     let quickMode = false;
-	let highlightEnabled = true;
-	
+    let highlightEnabled = true;
+    
     window.currentQuestion = null;
 
     document.getElementById('categoryFilter').addEventListener('change', applyFilters);
@@ -523,16 +525,16 @@
       }
     }
 
-	function updateCopySearchButtonVisibility() {
-	  const isMobile = window.innerWidth <= 576;
-	  const col = document.getElementById('copy-actions');
-	  const legacy = document.getElementById('copy-search-button'); // 舊單顆
-	  if (col) col.style.display = isMobile ? 'none' : 'flex';
-	  // 若你哪裡還會動到單顆，就順帶隱藏它
-	  if (legacy && !col) legacy.style.display = isMobile ? 'none' : 'block';
-	}
-	window.addEventListener('load', updateCopySearchButtonVisibility);
-	window.addEventListener('resize', updateCopySearchButtonVisibility);
+    function updateCopySearchButtonVisibility() {
+      const isMobile = window.innerWidth <= 576;
+      const col = document.getElementById('copy-actions');
+      const legacy = document.getElementById('copy-search-button'); // 舊單顆
+      if (col) col.style.display = isMobile ? 'none' : 'flex';
+      // 若你哪裡還會動到單顆，就順帶隱藏它
+      if (legacy && !col) legacy.style.display = isMobile ? 'none' : 'block';
+    }
+    window.addEventListener('load', updateCopySearchButtonVisibility);
+    window.addEventListener('resize', updateCopySearchButtonVisibility);
 
 
     function loadFromGitHub() {
@@ -556,7 +558,7 @@
           categories = [...new Set(questions.map(q => q.class))];
           filteredQuestions = [...questions];
           populateCategoryFilter();
-		  preprocessHighlights();
+          preprocessHighlights();
           renderQuestion();
           document.getElementById('fileInput').style.display = 'none';
           document.getElementById('github-load-btn').style.display = 'none';
@@ -589,8 +591,8 @@
           alert('無法從 GitHub 載入，請檢查 URL 或使用手動上傳。');
         });
     }
-	
-	function isFormTypingTarget(target) {
+    
+    function isFormTypingTarget(target) {
   if (!target) return false;
   const tag = target.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
@@ -619,7 +621,7 @@
           categories = [...new Set(questions.map(q => q.class))];
           filteredQuestions = [...questions];
           populateCategoryFilter();
-		  preprocessHighlights();
+          preprocessHighlights();
           renderQuestion();
           document.getElementById('fileInput').style.display = 'none';
           document.getElementById('github-load-btn').style.display = 'none';
@@ -678,11 +680,11 @@
           categories = [...new Set(questions.map(q => q.class))];
           filteredQuestions = [...questions];
           populateCategoryFilter();
-		  preprocessHighlights();
+          preprocessHighlights();
           renderQuestion();
           fileInput.style.display = 'none';
           document.getElementById('github-load-btn').style.display = 'none';
-		  document.getElementById('github-load-btn_s').style.display = 'none';
+          document.getElementById('github-load-btn_s').style.display = 'none';
           document.getElementById('github-info-btn').style.display = 'none';
           const storedHideAnswers = localStorage.getItem('hideAnswersState');
           if (storedHideAnswers !== null) {
@@ -757,13 +759,13 @@
       renderQuestion();
       updateFilterDownloadVisibility();
     }
-	
-	function getCorrectAnswerText(q) {
-		return q.options
+    
+    function getCorrectAnswerText(q) {
+        return q.options
     .filter(o => o.answer === true)
     .map(o => o.option)
     .join(' ');
-	}
+    }
 
 document.getElementById('answerFilter').addEventListener('blur', function () {
   if (!this.value.trim()) applyFilters();
@@ -818,16 +820,16 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
     function renderQuestion() {
       const questionContainer = document.getElementById('question-container');
       if (filteredQuestions.length === 0) {
-	  questionContainer.innerHTML = '<p>沒有符合篩選條件的題目。</p>';
-	  questionContainer.style.display = 'block';
+      questionContainer.innerHTML = '<p>沒有符合篩選條件的題目。</p>';
+      questionContainer.style.display = 'block';
 
-	  const feloBtn = document.getElementById('copy-search-button');
-	  if (feloBtn) feloBtn.disabled = true;   // 保持可見但不可點
-	  appendFontAdjuster();
-	  return;
-	}
-	const feloBtn = document.getElementById('copy-search-button');
-	if (feloBtn) feloBtn.disabled = false;    // 恢復可點
+      const feloBtn = document.getElementById('copy-search-button');
+      if (feloBtn) feloBtn.disabled = true;   // 保持可見但不可點
+      appendFontAdjuster();
+      return;
+    }
+    const feloBtn = document.getElementById('copy-search-button');
+    if (feloBtn) feloBtn.disabled = false;    // 恢復可點
       const isMobile = window.innerWidth <= 576;
       questionContainer.style.display = 'block';
       const q = filteredQuestions[randomOrder ? randomIndices[currentIndex] : currentIndex];
@@ -855,7 +857,6 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
           <div class="pic" style="display: block;">${renderPics(q.pic)}</div>
           <button class="btn btn-info btn-sm mt-2 note-btn" onclick="toggleNoteSection('${q.class}', '${formatSn(q.sn)}')">註記</button>
           <div id="note-section-${q.class}-${formatSn(q.sn)}" class="note-section" style="display: none; margin-top: 0.625rem;">
-            <!-- 當失去焦點時自動保存筆記 -->
             <textarea class="form-control" id="note-input-${q.class}-${formatSn(q.sn)}" rows="3" placeholder="輸入筆記..." onblur="saveNote('${q.class}', '${formatSn(q.sn)}')">${q.felo || ''}</textarea>
             <div class="mt-2">
               <button class="btn btn-outline-primary btn-sm" onclick="markDifficulty('${q.class}', '${formatSn(q.sn)}', '簡單')">簡單</button>
@@ -901,7 +902,7 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
       }
       // ★★ 修正結束 ★★
       renderReviewLight(q.class, formatSn(q.sn));
-	  
+      
       if (quickMode) {
         renderQuickNavigation(answered);
       } else {
@@ -910,48 +911,48 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
       updateCopySearchButtonVisibility();
       appendFontAdjuster();
     }
-	
-	function highlightText(text, q) {
-	  if (!highlightEnabled || !q._highlightRegex) return text;
-	  return text.replace(q._highlightRegex, '<span class="highlight">$1</span>');
-	}
+    
+    function highlightText(text, q) {
+      if (!highlightEnabled || !q._highlightRegex) return text;
+      return text.replace(q._highlightRegex, '<span class="highlight">$1</span>');
+    }
 
 
 
     function appendFontAdjuster() {
-		  const questionContainer = document.getElementById('question-container');
-		  if (!document.getElementById('font-adjuster')) {
-			const adjuster = document.createElement('div');
-			adjuster.id = 'font-adjuster';
-			adjuster.style.position = 'absolute';
-			adjuster.style.top  = '-15px';
-			adjuster.style.right = '20px';
-			adjuster.style.display = 'flex';
-			adjuster.style.gap = '5px';
-			adjuster.innerHTML = '<button id="font-decrease" style="border-radius: 50%; width: 30px; height: 30px; font-size: 0.8rem;">A-</button>' +
-								  '<button id="font-increase" style="border-radius: 50%; width: 30px; height: 30px; font-size: 0.8rem;">A+</button>';
-			const wrapper = document.querySelector('.question-wrapper');
-			wrapper.appendChild(adjuster);
-			document.getElementById('font-increase').addEventListener('click', function() {
-			  let currentSize = parseFloat(window.getComputedStyle(questionContainer).fontSize);
-			  let newSize = currentSize + 1;
-			  questionContainer.style.fontSize = newSize + "px";
-			  // ★ 把 key 由 "questionFontSize" 改為 "customFontSize" ★
-			  localStorage.setItem('customFontSize', newSize);
-			});
-			document.getElementById('font-decrease').addEventListener('click', function() {
-			  let currentSize = parseFloat(window.getComputedStyle(questionContainer).fontSize);
-			  let newSize = currentSize - 1;
-			  questionContainer.style.fontSize = newSize + "px";
-			  localStorage.setItem('customFontSize', newSize);
-			});
-		  }
-		  // ★ 使用新的 key "customFontSize" 取得保存的字型大小 ★
-		  const savedFontSize = localStorage.getItem('customFontSize');
-		  if (savedFontSize) {
-			questionContainer.style.fontSize = savedFontSize + "px";
-		  }
-		}
+          const questionContainer = document.getElementById('question-container');
+          if (!document.getElementById('font-adjuster')) {
+            const adjuster = document.createElement('div');
+            adjuster.id = 'font-adjuster';
+            adjuster.style.position = 'absolute';
+            adjuster.style.top  = '-15px';
+            adjuster.style.right = '20px';
+            adjuster.style.display = 'flex';
+            adjuster.style.gap = '5px';
+            adjuster.innerHTML = '<button id="font-decrease" style="border-radius: 50%; width: 30px; height: 30px; font-size: 0.8rem;">A-</button>' +
+                                 '<button id="font-increase" style="border-radius: 50%; width: 30px; height: 30px; font-size: 0.8rem;">A+</button>';
+            const wrapper = document.querySelector('.question-wrapper');
+            wrapper.appendChild(adjuster);
+            document.getElementById('font-increase').addEventListener('click', function() {
+              let currentSize = parseFloat(window.getComputedStyle(questionContainer).fontSize);
+              let newSize = currentSize + 1;
+              questionContainer.style.fontSize = newSize + "px";
+              // ★ 把 key 由 "questionFontSize" 改為 "customFontSize" ★
+              localStorage.setItem('customFontSize', newSize);
+            });
+            document.getElementById('font-decrease').addEventListener('click', function() {
+              let currentSize = parseFloat(window.getComputedStyle(questionContainer).fontSize);
+              let newSize = currentSize - 1;
+              questionContainer.style.fontSize = newSize + "px";
+              localStorage.setItem('customFontSize', newSize);
+            });
+          }
+          // ★ 使用新的 key "customFontSize" 取得保存的字型大小 ★
+          const savedFontSize = localStorage.getItem('customFontSize');
+          if (savedFontSize) {
+            questionContainer.style.fontSize = savedFontSize + "px";
+          }
+        }
 
 
     function formatSn(sn) {
@@ -1099,10 +1100,10 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
       const optionElement = checkbox.closest('.option');
       const isCorrect = optionElement.dataset.answer === 'true';
       showResult(isCorrect);
-	  if (window.currentQuestion) {
-		setReviewed(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
-		renderReviewLight(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
-		}
+      if (window.currentQuestion) {
+        setReviewed(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
+        renderReviewLight(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
+        }
     }
 
     function checkMultipleChoice() {
@@ -1125,7 +1126,7 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
       checkboxes.forEach(checkbox => checkbox.disabled = true);
       highlightCorrectOptions();
       showResult(allCorrect);
-	  if (window.currentQuestion) {
+      if (window.currentQuestion) {
   setReviewed(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
   renderReviewLight(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
 }
@@ -1186,7 +1187,7 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
           }
         });
       }
-	  if (window.currentQuestion) {
+      if (window.currentQuestion) {
   setReviewed(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
   renderReviewLight(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
 }
@@ -1312,32 +1313,32 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
       updateCopySearchButtonVisibility();
     });
 
-	function getCurrentQAFullText() {
-	  const container = document.getElementById('question-container');
-	  const questionText = container.querySelector("h3")?.innerText || '';
-	  const options = container.querySelectorAll(".option");
-	  let text = questionText + "\n\n選項：\n";
-	  let answers = "\n正確答案：\n";
-	  options.forEach(option => {
-		const dataText = option.getAttribute("data-text");
-		if (dataText) {
-		  text += dataText + "\n";
-		  if (option.dataset.answer === "true") { answers += dataText + "\n"; }
-		}
-	  });
-	  return (text + answers);
-	}
+    function getCurrentQAFullText() {
+      const container = document.getElementById('question-container');
+      const questionText = container.querySelector("h3")?.innerText || '';
+      const options = container.querySelectorAll(".option");
+      let text = questionText + "\n\n選項：\n";
+      let answers = "\n正確答案：\n";
+      options.forEach(option => {
+        const dataText = option.getAttribute("data-text");
+        if (dataText) {
+          text += dataText + "\n";
+          if (option.dataset.answer === "true") { answers += dataText + "\n"; }
+        }
+      });
+      return (text + answers);
+    }
 
-	function copyOnly() {
-	  const fullText = getCurrentQAFullText();
-	  const temp = document.createElement("textarea");
-	  temp.value = fullText;
-	  document.body.appendChild(temp);
-	  temp.select();
-	  document.execCommand("copy");
-	  document.body.removeChild(temp);
-	  showCopyMessage("文字已成功複製！");
-	}
+    function copyOnly() {
+      const fullText = getCurrentQAFullText();
+      const temp = document.createElement("textarea");
+      temp.value = fullText;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
+      showCopyMessage("文字已成功複製！");
+    }
 
 function copyAndSearchGPT() {
   const fullText = getCurrentQAFullText();
@@ -1355,33 +1356,33 @@ function copyAndSearchGPT() {
 }
 
 
-	// （保留功能，僅文案已改為「複製+felo查詢」）
-	function copyAndSearchFelo() {
-	  const fullText = getCurrentQAFullText();
-	  const temp = document.createElement("textarea");
-	  temp.value = fullText;
-	  document.body.appendChild(temp);
-	  temp.select();
-	  document.execCommand("copy");
-	  document.body.removeChild(temp);
+    // （保留功能，僅文案已改為「複製+felo查詢」）
+    function copyAndSearchFelo() {
+      const fullText = getCurrentQAFullText();
+      const temp = document.createElement("textarea");
+      temp.value = fullText;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
 
-	  showCopyMessage("已複製並以 felo 查詢！");
-	  const feloUrl = "https://felo.ai/search?q=" + encodeURIComponent(fullText);
-	  window.open(feloUrl, "_blank");
-	}
+      showCopyMessage("已複製並以 felo 查詢！");
+      const feloUrl = "https://felo.ai/search?q=" + encodeURIComponent(fullText);
+      window.open(feloUrl, "_blank");
+    }
 
-	// 可傳訊息的小提示（向下相容）
-	function showCopyMessage(msg) {
-	  const message = document.createElement('div');
-	  message.textContent = msg || "文字已成功複製並搜尋！";
-	  message.style.cssText = `
-		position: fixed; bottom: 6rem; right: .625rem; background-color: #d4edda;
-		padding: .625rem; border-radius: .3125rem; color: green; font-weight: bold;
-		z-index: 1100;
-	  `;
-	  document.body.appendChild(message);
-	  setTimeout(() => message.remove(), 2000);
-	}
+    // 可傳訊息的小提示（向下相容）
+    function showCopyMessage(msg) {
+      const message = document.createElement('div');
+      message.textContent = msg || "文字已成功複製並搜尋！";
+      message.style.cssText = `
+        position: fixed; bottom: 6rem; right: .625rem; background-color: #d4edda;
+        padding: .625rem; border-radius: .3125rem; color: green; font-weight: bold;
+        z-index: 1100;
+      `;
+      document.body.appendChild(message);
+      setTimeout(() => message.remove(), 2000);
+    }
 
 
 
@@ -1460,7 +1461,7 @@ document.addEventListener('keydown', function (event) {
   }
 });
 
-   
+    
 
     function shuffleOptions(options) {
       const fixedOptions = options.filter(opt => /(皆是|皆否|皆對|皆錯|皆可|皆非|以上兩點皆須|以上皆須)/.test(opt.option));
@@ -1518,8 +1519,8 @@ document.addEventListener('keydown', function (event) {
   const selectedQuestionType  = document.getElementById('questionTypeFilter').value;
   const selectedStars         = document.getElementById('starFilter').value;
   const lightFilter           = document.getElementById('reviewLightFilter')
-                               ? document.getElementById('reviewLightFilter').value  // '', 'red', 'green', 'yellow'
-                               : '';
+                                ? document.getElementById('reviewLightFilter').value  // '', 'red', 'green', 'yellow'
+                                : '';
 
   // 1) 類別
   if (selectedCategory) {
@@ -1723,7 +1724,7 @@ function renderDifficultyStars(className, sn) {
       let newRating = (currentRating === ratingClicked) ? 0 : ratingClicked;
       localStorage.setItem(key, newRating);
       updateDifficultyStarsUI(className, sn);
-	  renderReviewLight(className, sn);
+      renderReviewLight(className, sn);
     }
 
  function updateDifficultyStarsUI(className, sn) {
@@ -1804,16 +1805,16 @@ function renderDifficultyStars(className, sn) {
       document.getElementById('total-questions').textContent = filteredQuestions.length;
       renderQuestion();
     }
-	
-	function toggleHighlight() {
-	  highlightEnabled = document.getElementById('toggleHighlight').checked;
-	  document.documentElement.classList.toggle('no-highlight', !highlightEnabled);
-	  renderQuestion();
-	}
+    
+    function toggleHighlight() {
+      highlightEnabled = document.getElementById('toggleHighlight').checked;
+      document.documentElement.classList.toggle('no-highlight', !highlightEnabled);
+      renderQuestion();
+    }
 
 
 
-	function toggleQuickMode() {
+    function toggleQuickMode() {
       quickMode = !quickMode;
       if (quickMode) {
         document.getElementById('hideAnswers').checked = true;
@@ -1825,59 +1826,59 @@ function renderDifficultyStars(className, sn) {
         restoreFixedButtons();
       }
     }
-	
-	function escapeRegex(str) {
-	  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-	}
-	function preprocessHighlights() {
-	  questions.forEach(q => {
-		const m = q.felo && q.felo.match(/key\s*:\s*([^\r\n]+)/i);
-		if (!m) {
-		  q._highlightRegex = null;
-		} else {
-		 const keys = m[1].split(/[，,]/).map(s => escapeRegex(s.trim())).filter(Boolean);
-		  q._highlightRegex = new RegExp(`(${keys.join('|')})`, 'g');
-		}
-	  });
-	}
+    
+    function escapeRegex(str) {
+      return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    }
+    function preprocessHighlights() {
+      questions.forEach(q => {
+        const m = q.felo && q.felo.match(/key\s*:\s*([^\r\n]+)/i);
+        if (!m) {
+          q._highlightRegex = null;
+        } else {
+         const keys = m[1].split(/[，,]/).map(s => escapeRegex(s.trim())).filter(Boolean);
+          q._highlightRegex = new RegExp(`(${keys.join('|')})`, 'g');
+        }
+      });
+    }
 
 
     // ★★ 下載／複製搜尋結果功能 ★★
-		function updateFilterDownloadVisibility() {
-		  const collapseSettings = document.getElementById('collapseSettings');
-		  const container = document.getElementById('filter-download-container');
-		  if (collapseSettings.classList.contains('show') && filteredQuestions.length > 0) {
-			container.innerHTML = `
-			  <input type="checkbox" id="includeOptionsCheckbox" checked style="margin-right:8px;">
-			  <label for="includeOptionsCheckbox" style="margin-right:15px;">包含選項</label>
+        function updateFilterDownloadVisibility() {
+          const collapseSettings = document.getElementById('collapseSettings');
+          const container = document.getElementById('filter-download-container');
+          if (collapseSettings.classList.contains('show') && filteredQuestions.length > 0) {
+            container.innerHTML = `
+              <input type="checkbox" id="includeOptionsCheckbox" checked style="margin-right:8px;">
+              <label for="includeOptionsCheckbox" style="margin-right:15px;">包含選項</label>
 
-			  <input type="checkbox" id="exportFormatCheckbox" style="margin-right:8px;">
-			  <label for="exportFormatCheckbox" style="margin-right:15px;">用匯出格式(JSONL)</label>
+              <input type="checkbox" id="exportFormatCheckbox" style="margin-right:8px;">
+              <label for="exportFormatCheckbox" style="margin-right:15px;">用匯出格式(JSONL)</label>
 
-			  <button class="btn btn-success btn-sm" onclick="downloadFilteredResults()">下載結果</button>
-			  <button class="btn btn-info btn-sm ms-2" onclick="copyFilteredResults()">複製結果</button>
-			`;
+              <button class="btn btn-success btn-sm" onclick="downloadFilteredResults()">下載結果</button>
+              <button class="btn btn-info btn-sm ms-2" onclick="copyFilteredResults()">複製結果</button>
+            `;
 
-			// 勾選 JSONL 時，"包含選項" 對純文字輸出才有意義，這邊讓它灰掉
-			const exportCb = document.getElementById('exportFormatCheckbox');
-			const includeWrap = document.querySelector('label[for="includeOptionsCheckbox"]');
-			const includeCb = document.getElementById('includeOptionsCheckbox');
-			const syncIncludeState = () => {
-			  const on = exportCb.checked;
-			  includeCb.disabled = on;
-			  includeWrap.style.opacity = on ? '0.5' : '1';
-			};
-			exportCb.addEventListener('change', syncIncludeState);
-			syncIncludeState();
-		  } else {
-			container.innerHTML = '';
-		  }
-		}
+            // 勾選 JSONL 時，"包含選項" 對純文字輸出才有意義，這邊讓它灰掉
+            const exportCb = document.getElementById('exportFormatCheckbox');
+            const includeWrap = document.querySelector('label[for="includeOptionsCheckbox"]');
+            const includeCb = document.getElementById('includeOptionsCheckbox');
+            const syncIncludeState = () => {
+              const on = exportCb.checked;
+              includeCb.disabled = on;
+              includeWrap.style.opacity = on ? '0.5' : '1';
+            };
+            exportCb.addEventListener('change', syncIncludeState);
+            syncIncludeState();
+          } else {
+            container.innerHTML = '';
+          }
+        }
 
 
 
     
-	function downloadFilteredResults() {
+    function downloadFilteredResults() {
   const useJsonl = document.getElementById('exportFormatCheckbox')?.checked;
 
   if (useJsonl) {
@@ -1935,49 +1936,49 @@ function renderDifficultyStars(className, sn) {
 
 
 
-		function copyFilteredResults() {
-		  const includeOptions = document.getElementById('includeOptionsCheckbox').checked;
-		  let textOutput = "";
-		  filteredQuestions.forEach((q, index) => {
-			if (includeOptions) {
-			  textOutput += `NO:${index + 1}/${filteredQuestions.length}\n`;
-			  textOutput += `題目 ${formatSn(q.sn)}: [${q.class}] ${q.question}\n`;
-			  textOutput += "選項：\n";
-			  q.options.forEach((opt, i) => { 
-				textOutput += `   ${i + 1}. ${opt.option}\n`;
-			  });
-			  textOutput += "正確答案：\n";
-			  q.options.forEach((opt, i) => { 
-				if(opt.answer === true) { 
-				  textOutput += `   ${i + 1}. ${opt.option}\n`;
-				}
-			  });
-			  textOutput += "\n";
-			} else {
-			  let line = `NO:${index + 1}-`;
-			  let trimmedQuestion = q.question.trim();
-			  if (!trimmedQuestion.endsWith("？") && !trimmedQuestion.endsWith("?")) {
-				trimmedQuestion += "？";
-			  }
-			  line += `${trimmedQuestion} 正確答案：`;
-			  let answers = "";
-			  q.options.forEach((opt, i) => {
-				if(opt.answer === true){
-				  answers += `${i + 1}. ${opt.option} `;
-				}
-			  });
-			  line += answers.trim() + "\n";
-			  textOutput += line;
-			}
-		  });
-		  const tempTextArea = document.createElement('textarea');
-		  tempTextArea.value = textOutput;
-		  document.body.appendChild(tempTextArea);
-		  tempTextArea.select();
-		  document.execCommand('copy');
-		  document.body.removeChild(tempTextArea);
-		  alert('已複製搜尋結果到剪貼簿！');
-		}
+        function copyFilteredResults() {
+          const includeOptions = document.getElementById('includeOptionsCheckbox').checked;
+          let textOutput = "";
+          filteredQuestions.forEach((q, index) => {
+            if (includeOptions) {
+              textOutput += `NO:${index + 1}/${filteredQuestions.length}\n`;
+              textOutput += `題目 ${formatSn(q.sn)}: [${q.class}] ${q.question}\n`;
+              textOutput += "選項：\n";
+              q.options.forEach((opt, i) => { 
+                textOutput += `   ${i + 1}. ${opt.option}\n`;
+              });
+              textOutput += "正確答案：\n";
+              q.options.forEach((opt, i) => { 
+                if(opt.answer === true) { 
+                  textOutput += `   ${i + 1}. ${opt.option}\n`;
+                }
+              });
+              textOutput += "\n";
+            } else {
+              let line = `NO:${index + 1}-`;
+              let trimmedQuestion = q.question.trim();
+              if (!trimmedQuestion.endsWith("？") && !trimmedQuestion.endsWith("?")) {
+                trimmedQuestion += "？";
+              }
+              line += `${trimmedQuestion} 正確答案：`;
+              let answers = "";
+              q.options.forEach((opt, i) => {
+                if(opt.answer === true){
+                  answers += `${i + 1}. ${opt.option} `;
+                }
+              });
+              line += answers.trim() + "\n";
+              textOutput += line;
+            }
+          });
+          const tempTextArea = document.createElement('textarea');
+          tempTextArea.value = textOutput;
+          document.body.appendChild(tempTextArea);
+          tempTextArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempTextArea);
+          alert('已複製搜尋結果到剪貼簿！');
+        }
 
 
     
@@ -1986,7 +1987,7 @@ function renderDifficultyStars(className, sn) {
     collapseSettingsEl.addEventListener('shown.bs.collapse', updateFilterDownloadVisibility);
     // ★★ 結束 ★★
     
-	// ===== 複習燈號（紅/綠/黃） =====
+    // ===== 複習燈號（紅/綠/黃） =====
 function reviewKey(className, sn){ return `reviewed_${className}_${sn}`; }
 function isReviewed(className, sn){ return localStorage.getItem(reviewKey(className, sn)) === '1'; }
 function setReviewed(className, sn){ localStorage.setItem(reviewKey(className, sn), '1'); }
@@ -2038,7 +2039,7 @@ function renderReviewLight(className, sn){
   `;
 }
 
-	
+  
   </script>
 </body>
 </html>
