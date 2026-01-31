@@ -139,7 +139,7 @@
     .mobile-note-btn { left: 0; }
     .mobile-copy-search-btn { left: 35px; }
     .mobile-quick-btn { left: 70px; }
-    @media (max-width: 576px) {
+      @media (max-width: 576px) {
   .difficulty-stars { padding: 2px; }
   body { padding: 0.75rem; font-size: 1rem; }
 
@@ -150,6 +150,12 @@
     padding-bottom: 4rem !important;
     display: none;
   }
+
+    /* 新增：讓平板也能顯示左上三個按鈕（平板臨界值可調整） */
+    @media (max-width: 1024px) {
+      .mobile-note-btn, .mobile-copy-search-btn, .mobile-quick-btn { display: block; }
+      #copy-search-button { display: none !important; }
+    }
 
   .option { padding: 0.5rem; margin-bottom: 0.25rem; }
   .remark { padding: 0.5rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
@@ -526,7 +532,7 @@
     }
 
     function updateCopySearchButtonVisibility() {
-      const isMobile = window.innerWidth <= 576;
+      const isMobile = isMobileOrTablet();
       const col = document.getElementById('copy-actions');
       const legacy = document.getElementById('copy-search-button'); // 舊單顆
       if (col) col.style.display = isMobile ? 'none' : 'flex';
@@ -535,6 +541,12 @@
     }
     window.addEventListener('load', updateCopySearchButtonVisibility);
     window.addEventListener('resize', updateCopySearchButtonVisibility);
+
+    // 擴大判斷至平板：定義可重用的 helper
+    function isMobileOrTablet() {
+      // 1024 以下視為行動或平板（可調整臨界值）
+      return window.innerWidth <= 1024;
+    }
 
 
     function loadFromGitHub() {
@@ -830,7 +842,7 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
     }
     const feloBtn = document.getElementById('copy-search-button');
     if (feloBtn) feloBtn.disabled = false;    // 恢復可點
-      const isMobile = window.innerWidth <= 576;
+      const isMobile = isMobileOrTablet();
       questionContainer.style.display = 'block';
       const q = filteredQuestions[randomOrder ? randomIndices[currentIndex] : currentIndex];
       window.currentQuestion = q;
@@ -1758,7 +1770,7 @@ function renderDifficultyStars(className, sn) {
   starContainer.innerHTML = starsHtml;
 }
     
-    const swipeArea = window.innerWidth <= 576 ? document.body : document.getElementById('question-container');
+    const swipeArea = isMobileOrTablet() ? document.body : document.getElementById('question-container');
     let touchStartX = 0, touchEndX = 0;
     let touchStartY = 0, touchEndY = 0;
     const minSwipeDistance = 50;
