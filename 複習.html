@@ -56,12 +56,13 @@
     /* --- 修改重點結束 --- */
 
     .option > div { display: block; }
-    .options div:hover {
+    .options:hover {
      background-color: initial;
      box-shadow: none;
      transform: none;
     }
-    .option.answer { background-color: #fff3a6; color: #343a40; }
+   .option.answer { background-color: #d4edda; color: #1f3d2b; } /* 淺綠答案 */
+   .option.wrong  { background-color: #f8d7da; color: #842029; } /* 答錯紅 */
     .remark { background-color: #0dcaf0; padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.3125rem; }
     .felo {
     background-color: #d0f5d0;
@@ -200,7 +201,7 @@
     min-height: 60vh;
     max-height: 80vh;
     padding-bottom: 4rem !important;
-    display: none;
+    display: block;
   }
 
  
@@ -292,11 +293,15 @@
       color: #ffffff !important;
       font-weight: bold !important;
     }
-    .dark-mode .option.answer {
-      background-color: #b2bec3 !important;
-      color: #2d3436 !important;
+     .dark-mode .option.answer {
+      background-color: #1f3d2b !important; /* 深綠（夜間的淺綠等價） */
+      color: #d4edda !important;
     }
-    .dark-mode .options div:hover {
+    .dark-mode .option.wrong {
+      background-color: #5a1a1a !important; /* 深紅（夜間的紅等價） */
+      color: #f8d7da !important;
+    }
+    .dark-mode .option:hover {
       background-color: #4a4a4a !important;
       box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5) !important;
     }
@@ -1190,84 +1195,93 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
     let correctCount = 0;
     let incorrectCount = 0;
 
-    function toggleAnswerVisibility() {
-      const hideAnswers = document.getElementById('hideAnswers').checked;
-      localStorage.setItem('hideAnswersState', hideAnswers);
-      // 不自動標記為已讀，僅在使用者實際作答時呼叫 setReviewed()
-      const options = Array.from(document.querySelectorAll('.option'));
-      const answerCountContainer = document.querySelector('.answer-count-container');
-      if (hideAnswers) {
-        answerCountContainer.style.display = 'flex';
-      } else {
-        answerCountContainer.style.display = 'none';
-        correctCount = 0;
-        incorrectCount = 0;
-        updateAnswerCount();
-      }
-      if (!hideAnswers) {
-        correctCount = 0;
-        incorrectCount = 0;
-        updateAnswerCount();
-      }
-      answerRevealed = false;
-      const existingSubmitButton = document.getElementById('submit-button');
-      if (existingSubmitButton) {
-        existingSubmitButton.remove();
-      }
-      const isMultipleChoice = options.length > 1 && options.filter(opt => opt.dataset.answer === "true").length > 1;
-      if (hideAnswers) {
-        if (isMultipleChoice) {
-          options.forEach((option, i) => {
-            const checkboxId = `option-${i}`;
-            option.innerHTML = `
-              <div>
-                <input type="checkbox" id="${checkboxId}" class="answer-checkbox">
-                <label for="${checkboxId}">${option.dataset.text}</label>
-              </div>
-            `;
-            option.classList.remove('answer');
-            option.style.backgroundColor = 'white';
-            option.style.color = 'black';
-          });
-          const submitButton = document.createElement('button');
-          submitButton.id = 'submit-button';
-          submitButton.classList.add('btn', 'btn-primary');
-          submitButton.textContent = '送出答案';
-          submitButton.onclick = checkMultipleChoice;
-          document.querySelector('.question-content').appendChild(submitButton);
-        } else {
-          options.forEach((option, i) => {
-            const checkboxId = `option-${i}`;
-            option.innerHTML = `
-              <div>
-                <input type="checkbox" id="${checkboxId}" class="answer-checkbox" onchange="checkAnswer(this)">
-                <label for="${checkboxId}">${option.dataset.text}</label>
-              </div>
-            `;
-            option.classList.remove('answer');
-            option.style.backgroundColor = 'white';
-            option.style.color = 'black';
-          });
-        }
-      } else {
-        options.forEach(option => {
-          if (option.dataset.answer === 'true') {
-            option.classList.add('answer');
-            option.style.backgroundColor =  '#fff3a6';
-            option.style.color = '#343a40';
-          } else {
-            option.style.backgroundColor = 'white';
-            option.style.color = 'black';
-          }
-        });
-      }
+  function toggleAnswerVisibility() {
+  const hideAnswers = document.getElementById('hideAnswers').checked;
+  localStorage.setItem('hideAnswersState', hideAnswers);
+
+  // 不自動標記為已讀，僅在使用者實際作答時呼叫 setReviewed()
+  const options = Array.from(document.querySelectorAll('.option'));
+  const answerCountContainer = document.querySelector('.answer-count-container');
+
+  if (hideAnswers) {
+    answerCountContainer.style.display = 'flex';
+  } else {
+    answerCountContainer.style.display = 'none';
+    correctCount = 0;
+    incorrectCount = 0;
+    updateAnswerCount();
+  }
+
+  answerRevealed = false;
+
+  const existingSubmitButton = document.getElementById('submit-button');
+  if (existingSubmitButton) {
+    existingSubmitButton.remove();
+  }
+
+  // 複選判定：正確答案數 > 1
+  const isMultipleChoice =
+    options.length > 1 && options.filter(opt => opt.dataset.answer === "true").length > 1;
+
+  if (hideAnswers) {
+    // 遮住答案：把每個 .option(外層是 label) 內部改成 input + span，避免巢狀 label
+    options.forEach((option, i) => {
+      const checkboxId = `option-${i}`;
+
+      option.innerHTML = `
+        <input type="checkbox"
+               id="${checkboxId}"
+               class="answer-checkbox"
+               ${isMultipleChoice ? '' : 'onchange="checkAnswer(this)"'}>
+        <span>${option.dataset.text}</span>
+      `;
+
+      option.classList.remove('answer', 'wrong');
+      option.style.backgroundColor = 'white';
+      option.style.color = 'black';
+    });
+
+    // 複選：加入送出按鈕
+    if (isMultipleChoice) {
+      const submitButton = document.createElement('button');
+      submitButton.id = 'submit-button';
+      submitButton.classList.add('btn', 'btn-primary');
+      submitButton.textContent = '送出答案';
+      submitButton.onclick = checkMultipleChoice;
+      document.querySelector('.question-content').appendChild(submitButton);
     }
+  } else {
+    // 顯示答案：恢復正確答案樣式、清除錯誤樣式
+    options.forEach(option => {
+      if (option.dataset.answer === 'true') {
+        option.classList.add('answer');
+        option.classList.remove('wrong');
+        option.style.backgroundColor = '#d4edda';
+        option.style.color = '#1f3d2b';
+      } else {
+        option.classList.remove('answer', 'wrong');
+        option.style.backgroundColor = 'white';
+        option.style.color = 'black';
+      }
+    });
+
+    correctCount = 0;
+    incorrectCount = 0;
+    updateAnswerCount();
+  }
+}
+
 
     function checkAnswer(checkbox) {
       const allCheckboxes = document.querySelectorAll('.answer-checkbox');
       allCheckboxes.forEach(cb => cb.disabled = true);
       const optionElement = checkbox.closest('.option');
       const isCorrect = optionElement.dataset.answer === 'true';
+	    if (!isCorrect) {
+        optionElement.classList.add('wrong');
+        optionElement.style.backgroundColor = '#f8d7da';
+        optionElement.style.color = '#842029';
+      }
       showResult(isCorrect);
       if (window.currentQuestion) {
         setReviewed(window.currentQuestion.class, formatSn(window.currentQuestion.sn));
@@ -1284,7 +1298,12 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
         const isCorrect = optionElement.dataset.answer === 'true';
         if (checkbox.checked) {
           anySelected = true;
-          if (!isCorrect) allCorrect = false;
+          if (!isCorrect) {
+           allCorrect = false;
+            optionElement.classList.add('wrong');
+            optionElement.style.backgroundColor = '#f8d7da';
+            optionElement.style.color = '#842029';
+          }
         }
         if (!checkbox.checked && isCorrect) allCorrect = false;
       });
@@ -1351,8 +1370,9 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
         const options = document.querySelectorAll('.option');
         options.forEach(option => {
           if (option.dataset.answer === 'true') {
-            option.style.backgroundColor =  '#fff3a6';
-            option.style.color = '#343a40';
+             option.classList.add('answer');
+           option.style.backgroundColor =  '#d4edda';
+            option.style.color = '#1f3d2b';
           }
         });
       }
@@ -1832,8 +1852,9 @@ document.addEventListener('keydown', function (event) {
       const options = document.querySelectorAll('.option');
       options.forEach(option => {
         if (option.dataset.answer === 'true') {
-          option.style.backgroundColor = '#fff3a6';
-          option.style.color = '#343a40';
+                   option.classList.add('answer');
+          option.style.backgroundColor = '#d4edda';
+          option.style.color = '#1f3d2b';
           option.classList.add('answer');
         }
       });
