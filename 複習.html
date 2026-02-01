@@ -139,6 +139,58 @@
     .mobile-note-btn { left: 0; }
     .mobile-copy-search-btn { left: 35px; }
     .mobile-quick-btn { left: 70px; }
+	
+	
+	/* 平板/手機：左上角顯示「註/搜/快」，並隱藏右側 copy-actions（跟 JS 判斷一致） */
+@media (max-width: 1024px) {
+  .mobile-note-btn, .mobile-copy-search-btn, .mobile-quick-btn { display: block; }
+  #copy-actions { display: none !important; }           /* 右下角三顆 copy 行為整組隱藏 */
+   .progress-header { padding-left: 110px; }  /* 30*3 + gap，留出按鈕區 */
+  #copy-search-button { display: none !important; }     /* 舊單顆保險隱藏 */
+}
+
+/* 平板專用放大（769–1024） */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mobile-note-btn,
+  .mobile-copy-search-btn,
+  .mobile-quick-btn {
+    width: 44px;          /* Apple HIG / Material 常用觸控尺寸 */
+    height: 44px;
+    line-height: 42px;
+    font-size: 1.1rem;    /* 文字放大 */
+    border-radius: 8px;   /* 視覺更穩 */
+  }
+
+  .mobile-copy-search-btn { left: 48px; }
+  .mobile-quick-btn       { left: 96px; }
+}
+
+/* 手機維持小尺寸（<=768） */
+@media (max-width: 768px) {
+  .mobile-note-btn,
+  .mobile-copy-search-btn,
+  .mobile-quick-btn {
+    width: 30px;
+    height: 30px;
+    line-height: 28px;
+    font-size: 0.9em;
+    border-radius: 4px;
+  }
+
+  .mobile-copy-search-btn { left: 35px; }
+  .mobile-quick-btn       { left: 70px; }
+}
+
+
+
+/* 桌機：隱藏左上角「註/搜/快」，顯示右下角 copy-actions */
+@media (min-width: 1025px) {
+  .mobile-note-btn, .mobile-copy-search-btn, .mobile-quick-btn { display: none; }
+  #copy-actions { display: flex; }
+}
+
+
+	
       @media (max-width: 576px) {
   .difficulty-stars { padding: 2px; }
   body { padding: 0.75rem; font-size: 1rem; }
@@ -151,12 +203,7 @@
     display: none;
   }
 
-    /* 新增：讓平板也能顯示左上三個按鈕（平板臨界值可調整） */
-    @media (max-width: 1024px) {
-      .mobile-note-btn, .mobile-copy-search-btn, .mobile-quick-btn { display: block; }
-      #copy-search-button { display: none !important; }
-    }
-
+ 
   .option { padding: 0.5rem; margin-bottom: 0.25rem; }
   .remark { padding: 0.5rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
   .felo {
