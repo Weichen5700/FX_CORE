@@ -475,6 +475,10 @@
     <button class="btn btn-primary" onclick="prevQuestion()">上一題</button>
     <button class="btn btn-primary" onclick="nextQuestion()">下一題</button>
   </div>
+  <!-- 統計圓餅圖區塊 -->
+  <div id="review-stats" style="margin-top:0.75rem; display:flex; gap:1rem; align-items:center; justify-content:center; flex-wrap:wrap;">
+    <div id="reviewStatsContainer" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-start; justify-content:center; width:100%;"></div>
+  </div>
   <div class="background-shapes">
     <div class="shape" style="left: 5%; animation-duration: 12s;"></div>
     <div class="shape" style="left: 15%; animation-duration: 10s;"></div>
@@ -488,6 +492,26 @@
     <div class="shape" style="left: 95%; animation-duration: 10s;"></div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script>
+    // 註冊 datalabels（若需要）並提供共用 formatter
+    if (window.Chart && window.Chart.register) {
+      try { Chart.register(ChartDataLabels); } catch(e) { }
+    }
+    function reviewDatalabelFormatter(value, context) {
+      try {
+        const data = context.chart.data.datasets[0].data || [];
+        const sum = data.reduce((a,b)=>a+(Number(b)||0),0);
+        const pct = sum ? Math.round((Number(value)||0) * 100 / sum) : 0;
+        return (Number(value)||0) + ' (' + pct + '%)';
+      } catch(e) { return value; }
+    }
+    // 統一顏色（未讀灰、已讀無星綠、有星紅）
+    const COLOR_UNREAD = '#95a5a6';
+    const COLOR_READ = '#2ecc71';
+    const COLOR_STAR = '#e74c3c';
+  </script>
   <script>
     // 基本功能程式碼（讀取題目、過濾、切換等）
     function toggleDarkMode() {
@@ -558,8 +582,8 @@
         })
         .then(data => {
           const lines = data.split('\n').filter(Boolean);
-          questions = lines.map(line => {
-            const question = JSON.parse(line);
+            questions = lines.map(line => {
+              const question = JSON.parse(line);
             question.sn = formatSn(question.sn);
             return question;
           });
@@ -621,8 +645,8 @@
         })
         .then(data => {
           const lines = data.split('\n').filter(Boolean);
-          questions = lines.map(line => {
-            const question = JSON.parse(line);
+            questions = data.split('\n').filter(Boolean).map(line => {
+              const question = JSON.parse(line);
             question.sn = formatSn(question.sn);
             return question;
           });
@@ -668,6 +692,89 @@
     }
     
     window.loadFromGitHub = loadFromGitHub;
+    // 當按下載入按鈕時，隱藏預覽統計區塊
+    const btnA_el = document.getElementById('github-load-btn');
+    const btnB_el = document.getElementById('github-load-btn_s');
+    if (btnA_el) btnA_el.addEventListener('click', () => { const el = document.getElementById('review-stats'); if (el) el.style.display = 'none'; });
+    if (btnB_el) btnB_el.addEventListener('click', () => { const el = document.getElementById('review-stats'); if (el) el.style.display = 'none'; });
+
+    // 預載並在尚未載入題庫前顯示圖表（兩個檔案，各自以按鈕文字為標題）
+    async function preloadAndRenderCharts() {
+      try {
+        const btnA = document.getElementById('github-load-btn');
+        const btnB = document.getElementById('github-load-btn_s');
+        const urlA = 'https://weichen5700.github.io/FX_CORE/uploadfile.txt';
+        const urlB = 'https://weichen5700.github.io/FX_CORE/uploadfile_s.txt';
+        const pairs = [ {btn: btnA, url: urlA}, {btn: btnB, url: urlB} ];
+        const container = document.getElementById('reviewStatsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i=0;i<pairs.length;i++){
+          const p = pairs[i];
+          const title = (p.btn && p.btn.textContent) ? p.btn.textContent.trim() : `檔案 ${i+1}`;
+          try{
+            const resp = await fetch(p.url, {cache:'no-store'});
+            if (!resp.ok) throw new Error('fetch fail');
+            const text = await resp.text();
+            const lines = text.split('\n').filter(Boolean);
+            const info = { unread:0, readNoStar:0, important:0, stars:[0,0,0,0,0], total: lines.length };
+            lines.forEach(line => {
+              try{
+                const q = JSON.parse(line);
+                const cls = q.class; const sn = formatSn(q.sn);
+                const reviewed = isReviewed(cls, sn);
+                const stars = getStarRating(cls, sn);
+                if (!reviewed) { info.unread++; info.stars[0]++; }
+                else { if (stars>=1) { info.important++; info.stars[2+ (stars-1)]++; } else { info.readNoStar++; info.stars[1]++; } }
+              }catch(e){}
+            });
+            const block = document.createElement('div');
+            block.style.flex = '1 1 420px'; block.style.maxWidth='720px'; block.style.background='#fff'; block.style.padding='0.5rem'; block.style.borderRadius='8px'; block.style.boxShadow='0 0 6px rgba(0,0,0,0.06)';
+            block.innerHTML = `<div style="text-align:center; font-weight:bold; margin-bottom:0.25rem;">${title} (共 ${info.total})</div><div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1 1 260px;min-width:260px"><canvas id="pre_status_${i}" style="width:640px;height:260px;display:block"></canvas></div><div style="flex:1 1 260px;min-width:260px"><canvas id="pre_stars_${i}" style="width:640px;height:260px;display:block"></canvas></div></div>`;
+            container.appendChild(block);
+            try {
+              const el1 = document.getElementById(`pre_status_${i}`);
+              const el2 = document.getElementById(`pre_stars_${i}`);
+              const c1 = el1.getContext('2d');
+              const c2 = el2.getContext('2d');
+              const statusColors = [COLOR_UNREAD, COLOR_READ, COLOR_STAR];
+              const starColors = [COLOR_READ, '#f1c40f', '#e67e22', '#c0392b'];
+              const cfgStatus = {
+                type: 'pie',
+                data: { labels: ['未讀','已讀','已讀重要'], datasets: [{ data: [info.unread, info.readNoStar, info.important], backgroundColor: statusColors }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { datalabels: { color: '#fff', formatter: reviewDatalabelFormatter } } }
+              };
+              const starData = info.stars.slice(1);
+              const starSum = starData.reduce((a,b)=>a+(Number(b)||0),0);
+              const cfgStars = {
+                type: 'pie',
+                data: { labels: ['0星','1星','2星','3星'], datasets: [{ data: starData, backgroundColor: starColors }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { datalabels: { color: '#fff', formatter: reviewDatalabelFormatter } } }
+              };
+              new Chart(c1, cfgStatus);
+              if (starSum > 0) {
+                new Chart(c2, cfgStars);
+              } else {
+                const rightWrap = el2.parentElement || el2.parentNode;
+                if (rightWrap) rightWrap.innerHTML = '<div style="width:640px;height:260px;display:flex;align-items:center;justify-content:center;color:#888;border-radius:6px;background:#fafafa;border:1px dashed #eee;">尚無已讀資料</div>';
+              }
+            } catch (chartErr) {
+              console.warn('Chart render error for preview', p.url, chartErr);
+              block.innerHTML = `<div style="text-align:center; font-weight:bold; margin-bottom:0.25rem;">${title} (預覽顯示失敗)</div><div style="display:flex;gap:8px;align-items:center;justify-content:center"><div style="width:320px;height:260px;display:flex;align-items:center;justify-content:center;color:#888;border-radius:6px;background:#fafafa;border:1px dashed #eee;">狀態圖顯示失敗</div><div style="width:320px;height:260px;display:flex;align-items:center;justify-content:center;color:#888;border-radius:6px;background:#fafafa;border:1px dashed #eee;">星數圖顯示失敗</div></div>`;
+            }
+          }catch(e){ 
+            console.warn('無法載入預覽檔',p.url);
+            // 如果預覽載入失敗，顯示一個佔位區塊，避免右側圖表消失
+            const placeholder = document.createElement('div');
+            placeholder.style.flex = '1 1 420px'; placeholder.style.maxWidth='720px';
+            placeholder.style.background='#fff'; placeholder.style.padding='0.5rem'; placeholder.style.borderRadius='8px'; placeholder.style.boxShadow='0 0 6px rgba(0,0,0,0.06)';
+            placeholder.innerHTML = `<div style="text-align:center; font-weight:bold; margin-bottom:0.25rem;">${title} (預覽載入失敗)</div><div style="display:flex;gap:8px;align-items:center;justify-content:center"><div style="width:320px;height:260px;display:flex;align-items:center;justify-content:center;color:#888;border-radius:6px;background:#fafafa;border:1px dashed #eee;">無法載入</div><div style="width:320px;height:260px;display:flex;align-items:center;justify-content:center;color:#888;border-radius:6px;background:#fafafa;border:1px dashed #eee;">無法載入</div></div>`;
+            container.appendChild(placeholder);
+          }
+        }
+      }catch(e){ console.error(e); }
+    }
+    window.addEventListener('load', function(){ if (!questions || questions.length===0) preloadAndRenderCharts(); });
 
     function readFile() {
       const fileInput = document.getElementById('fileInput');
@@ -892,6 +999,8 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
       toggleRemarkVisibility();
       toggleFeloVisibility();
       togglePicVisibility();
+      // 更新統計圖表（但不在此自動標記為已讀，避免不預期的大量標記）
+      updateReviewCharts();
       
       // ★★ 以下為修正點 ★★
       const selectedStars = document.getElementById('starFilter').value;
@@ -1037,6 +1146,7 @@ document.getElementById('answerFilter').addEventListener('blur', function () {
     function toggleAnswerVisibility() {
       const hideAnswers = document.getElementById('hideAnswers').checked;
       localStorage.setItem('hideAnswersState', hideAnswers);
+      // 不自動標記為已讀，僅在使用者實際作答時呼叫 setReviewed()
       const options = Array.from(document.querySelectorAll('.option'));
       const answerCountContainer = document.querySelector('.answer-count-container');
       if (hideAnswers) {
@@ -1737,6 +1847,7 @@ function renderDifficultyStars(className, sn) {
       localStorage.setItem(key, newRating);
       updateDifficultyStarsUI(className, sn);
       renderReviewLight(className, sn);
+      try{ updateReviewCharts(); }catch(e){}
     }
 
  function updateDifficultyStarsUI(className, sn) {
@@ -2002,7 +2113,7 @@ function renderDifficultyStars(className, sn) {
     // ===== 複習燈號（紅/綠/黃） =====
 function reviewKey(className, sn){ return `reviewed_${className}_${sn}`; }
 function isReviewed(className, sn){ return localStorage.getItem(reviewKey(className, sn)) === '1'; }
-function setReviewed(className, sn){ localStorage.setItem(reviewKey(className, sn), '1'); }
+function setReviewed(className, sn){ localStorage.setItem(reviewKey(className, sn), '1'); try{ updateReviewCharts(); }catch(e){} }
 function getStarRating(className, sn){
   return parseInt(localStorage.getItem(`difficulty_${className}_${sn}`)) || 0;
 }
@@ -2011,6 +2122,155 @@ function getReviewLightStatus(className, sn){
   if (!isReviewed(className, sn)) return 'red';
   return getStarRating(className, sn) > 0 ? 'yellow' : 'green';
 }
+
+// ===== 複習統計與圓餅圖 =====
+let reviewChartStatus = {};
+let reviewChartStars = {};
+
+// function markReadIfHidden(q) { /* 已移除以避免自動標記 */ }
+
+function scanLocalStorageStats() {
+  // 掃描 localStorage 中的 reviewed_ 和 difficulty_ 鍵，回傳每個 class 的題目集合與狀態
+  const classes = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    let m;
+    if (key.startsWith('reviewed_')) {
+      // reviewed_{class}_{sn}
+      m = key.match(/^reviewed_(.+?)_(\d+)$/);
+      if (m) {
+        const cls = m[1]; const sn = m[2];
+        classes[cls] = classes[cls] || { snSet: new Set(), reviewed: {}, difficulty: {} };
+        classes[cls].snSet.add(sn);
+        classes[cls].reviewed[sn] = true;
+      }
+    } else if (key.startsWith('difficulty_')) {
+      m = key.match(/^difficulty_(.+?)_(\d+)$/);
+      if (m) {
+        const cls = m[1]; const sn = m[2];
+        classes[cls] = classes[cls] || { snSet: new Set(), reviewed: {}, difficulty: {} };
+        classes[cls].snSet.add(sn);
+        const val = parseInt(localStorage.getItem(key)) || 0;
+        classes[cls].difficulty[sn] = val;
+      }
+    }
+  }
+  // 建立統計
+  const result = {};
+  Object.keys(classes).forEach(cls => {
+    const info = classes[cls];
+    let unread = 0, readNoStar = 0, important = 0;
+    let starsUnread = 0, s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+    info.snSet.forEach(sn => {
+      const reviewed = !!info.reviewed[sn];
+      const stars = info.difficulty[sn] || 0;
+      if (!reviewed) { unread++; starsUnread++; }
+      else {
+        if (stars >= 1) { important++; if (stars===1) s1++; else if (stars===2) s2++; else if (stars===3) s3++; }
+        else { readNoStar++; s0++; }
+      }
+    });
+    result[cls] = { unread, readNoStar, important, stars: [starsUnread, s0, s1, s2, s3], total: info.snSet.size };
+  });
+  return result;
+}
+
+function computeReviewStats() {
+  // 若已載入 questions，使用 questions 計算；否則從 localStorage 掃描
+  if (questions && questions.length) {
+    let unread = 0, readNoStar = 0, important = 0;
+    let starsUnread = 0, s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+    questions.forEach(q => {
+      const className = q.class; const sn = formatSn(q.sn);
+      const reviewed = isReviewed(className, sn);
+      const stars = getStarRating(className, sn);
+      if (!reviewed) { unread++; starsUnread++; }
+      else { if (stars >= 1) { important++; if (stars===1) s1++; else if (stars===2) s2++; else if (stars===3) s3++; } else { readNoStar++; s0++; } }
+    });
+    return { combined: { unread, readNoStar, important, stars: [starsUnread, s0, s1, s2, s3] } };
+  }
+  return scanLocalStorageStats();
+}
+
+function updateReviewCharts() {
+  try {
+    const stats = computeReviewStats();
+    const container = document.getElementById('reviewStatsContainer');
+    if (!container) return;
+    // 清空現有內容（在未載入題庫前會重建）
+    container.innerHTML = '';
+    // stats 可能是 { combined: {...} } 或是物件 keyed by class
+    const classes = [];
+    if (stats.combined) {
+      classes.push({ name: '全部', stat: stats.combined });
+    } else {
+      Object.keys(stats).sort().slice(0,2).forEach(cls => classes.push({ name: cls, stat: stats[cls] }));
+    }
+    // 顏色對應：未讀灰, 已讀綠, 已讀重要(有星) 紅；星數分佈顏色階
+    const statusColors = [COLOR_UNREAD, COLOR_READ, COLOR_STAR]; // 未讀, 已讀(無星), 已讀重要
+    // 星數顏色：0星 綠, 1星 黃, 2星 橙, 3星 紅（易於區分）
+    const starColors = [COLOR_READ, '#f1c40f', '#e67e22', '#c0392b']; // 0,1,2,3
+
+    classes.forEach((entry, idx) => {
+      const cls = entry.name; const st = entry.stat;
+      const block = document.createElement('div');
+      block.style.flex = '1 1 420px';
+      block.style.maxWidth = '720px';
+      block.style.background = '#fff';
+      block.style.padding = '0.5rem';
+      block.style.borderRadius = '8px';
+      block.style.boxShadow = '0 0 6px rgba(0,0,0,0.06)';
+      block.innerHTML = `<div style="text-align:center; font-weight:bold; margin-bottom:0.25rem;">${cls} - 題目狀態 (共 ${st.total|| (st.unread+st.readNoStar+st.important)})</div>
+        <canvas id="chartStatus_${idx}" style="width:640px;height:260px;display:block"></canvas>
+        <hr style="margin:8px 0;">
+        <div style="text-align:center; font-weight:bold; margin-bottom:0.25rem;">${cls} - 星數分佈</div>
+        <canvas id="chartStars_${idx}" style="width:640px;height:260px;display:block"></canvas>`;
+      container.appendChild(block);
+
+      const statusCanvas = document.getElementById(`chartStatus_${idx}`);
+      const starsCanvas = document.getElementById(`chartStars_${idx}`);
+      const leftData = [st.unread || 0, st.readNoStar || 0, st.important || 0];
+      const rightData = (st.stars) ? st.stars.slice(1) : [0,0,0,0];
+
+      const ctxS = statusCanvas.getContext('2d');
+      const ctxT = starsCanvas.getContext('2d');
+
+      // 建立或更新圖表（以 class 名稱為 key）
+      const key = cls;
+      if (reviewChartStatus[key]) { reviewChartStatus[key].destroy(); delete reviewChartStatus[key]; }
+      if (reviewChartStars[key]) { reviewChartStars[key].destroy(); delete reviewChartStars[key]; }
+      try {
+        reviewChartStatus[key] = new Chart(ctxS, { type: 'pie', data: { labels: ['未讀','已讀','已讀重要'], datasets: [{ data: leftData, backgroundColor: statusColors }] }, options: { responsive:true, maintainAspectRatio:true, plugins:{datalabels:{color:'#fff',formatter:reviewDatalabelFormatter}} } });
+      } catch (eStatus) {
+        console.warn('Status chart failed for', key, eStatus);
+        const statusCanvasEl = block.querySelector(`#chartStatus_${idx}`);
+        if (statusCanvasEl) {
+          const ph = document.createElement('div');
+          ph.style.width='640px'; ph.style.height='260px'; ph.style.display='flex'; ph.style.alignItems='center'; ph.style.justifyContent='center'; ph.style.color='#888'; ph.style.border='1px dashed #eee'; ph.style.background='#fafafa'; ph.style.borderRadius='6px'; ph.textContent='狀態圖顯示失敗';
+          statusCanvasEl.replaceWith(ph);
+        }
+      }
+      // 右側星數若無已讀資料，顯示替代文字
+      const rightSum = rightData.reduce((a,b)=>a+(Number(b)||0),0);
+      try {
+        if (rightSum > 0) {
+          reviewChartStars[key] = new Chart(ctxT, { type: 'pie', data: { labels: ['0星','1星','2星','3星'], datasets: [{ data: rightData, backgroundColor: starColors }] }, options: { responsive:true, maintainAspectRatio:true, plugins:{datalabels:{color:'#fff',formatter:reviewDatalabelFormatter}} } });
+        } else {
+          const starsCanvasEl = block.querySelector(`#chartStars_${idx}`);
+          if (starsCanvasEl) {
+            const ph2 = document.createElement('div'); ph2.style.width='640px'; ph2.style.height='260px'; ph2.style.display='flex'; ph2.style.alignItems='center'; ph2.style.justifyContent='center'; ph2.style.color='#888'; ph2.style.border='1px dashed #eee'; ph2.style.background='#fafafa'; ph2.style.borderRadius='6px'; ph2.textContent = '尚無已讀資料'; starsCanvasEl.replaceWith(ph2);
+          }
+        }
+      } catch (eStars) {
+        console.warn('Stars chart failed for', key, eStars);
+        const starsCanvasEl = block.querySelector(`#chartStars_${idx}`);
+        if (starsCanvasEl) starsCanvasEl.replaceWith(document.createElement('div'));
+      }
+    });
+  } catch(e) { console.error(e); }
+}
+
 
 // 確保有燈號插槽（放在星星右邊）
 function ensureReviewLightSlot(){
@@ -2035,7 +2295,7 @@ function renderReviewLight(className, sn){
   if (!box) return;
 
   const status = getReviewLightStatus(className, sn);
-  const COLORS = { red:'#e53935', green:'#43a047', yellow:'#fdd835' };
+  const COLORS = { red: COLOR_UNREAD, green: COLOR_READ, yellow: COLOR_STAR };
   const LABELS = { red:'未複習', green:'已複習(無星)', yellow:'已複習(有星)' };
 
   box.innerHTML = `
